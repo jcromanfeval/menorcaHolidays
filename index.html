@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#092f35">
+  <meta name="description" content="Guía personal e itinerario editable para una semana en Menorca">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg">
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="styles.css?v=3">
+  <title>Menorca · Mi viaje</title>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">22–29 JULIO 2026</p>
+        <h1>Menorca <span>☀</span></h1>
+      </div>
+      <button class="icon-button" id="installBtn" hidden aria-label="Instalar aplicación" title="Instalar">↓</button>
+    </header>
+
+    <main>
+      <section class="view active" id="todayView" aria-labelledby="todayTitle">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <span class="pill light" id="tripStatus">Próximo viaje</span>
+            <h2 id="todayTitle">Tu semana en la isla</h2>
+            <p id="heroText">Seis días de calas, caminos y pueblos, con base en Es Castell.</p>
+          </div>
+          <div class="countdown"><strong id="countdownDays">—</strong><span>días</span></div>
+        </div>
+
+        <div class="section-head">
+          <div><p class="eyebrow dark">ITINERARIO</p><h2>Elige un día</h2></div>
+          <button class="text-button" data-open="planModal">+ Añadir plan</button>
+        </div>
+        <div class="day-strip" id="dayStrip" role="tablist"></div>
+        <article class="day-summary" id="daySummary"></article>
+        <div class="plan-list" id="planList"></div>
+      </section>
+
+      <section class="view" id="mapView" aria-labelledby="mapTitle">
+        <div class="section-head map-head">
+          <div><p class="eyebrow dark">EXPLORAR</p><h2 id="mapTitle">Mapa de la isla</h2></div>
+          <span class="pill map-pill" id="locationCount">24 lugares</span>
+        </div>
+        <div class="map-switch" role="group" aria-label="Tipo de mapa"><button class="active" data-map-mode="illustrated">Ilustrado</button><button data-map-mode="street">Calles</button></div>
+        <div class="map-shell"><div id="map"></div><button id="locateBtn" class="locate-button" aria-label="Ver mi ubicación">◎</button></div>
+        <div class="map-results" id="mapResults"></div>
+      </section>
+
+      <section class="view" id="savedView" aria-labelledby="savedTitle">
+        <div class="section-head">
+          <div><p class="eyebrow dark">TU VIAJE</p><h2 id="savedTitle">Guardados y notas</h2></div>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <h3 class="subheading">Favoritos</h3>
+        <div id="favoritesList" class="compact-list"></div>
+        <h3 class="subheading">Notas del viaje</h3>
+        <textarea id="tripNotes" class="notes" rows="6" placeholder="Restaurantes, cosas que llevar, recuerdos…"></textarea>
+        <div class="button-row">
+          <button class="secondary-button" id="exportBtn">Exportar copia</button>
+          <label class="secondary-button file-label">Importar<input id="importInput" type="file" accept="application/json"></label>
+        </div>
+      </section>
+
+      <section class="view" id="guideView" aria-labelledby="guideTitle">
+        <div class="section-head"><div><p class="eyebrow dark">GUÍA RÁPIDA</p><h2 id="guideTitle">Viajar mejor</h2></div></div>
+        <div class="guide-grid">
+          <a class="guide-card weather" href="https://www.aemet.es/es/eltiempo/prediccion/municipios/mao-mahon-id07032" target="_blank"><span>☀</span><div><strong>Tiempo y viento</strong><small>Consulta AEMET antes de elegir costa</small></div></a>
+          <a class="guide-card" href="https://www.bustorresmenorca.com/horarios/" target="_blank"><span>🚌</span><div><strong>Buses de playa</strong><small>Macarella, Turqueta y Son Saura</small></div></a>
+          <a class="guide-card" href="https://autosfornells.com/" target="_blank"><span>🗼</span><div><strong>Bus a Favàritx</strong><small>Reserva la línea L43</small></div></a>
+          <a class="guide-card" href="tel:112"><span>＋</span><div><strong>Emergencias · 112</strong><small>Llamada directa</small></div></a>
+        </div>
+        <div class="info-card"><h3>Regla del viento</h3><p>Con tramuntana fuerte, prioriza las calas del sur. Con viento fuerte del sur, valora el norte. Comprueba siempre el oleaje local antes del baño o del kayak.</p></div>
+        <div class="info-card"><h3>Mochila de cala</h3><div class="check-grid" id="packingList"></div></div>
+        <div class="info-card"><h3>Datos del viaje</h3><p><b>Alojamiento:</b> Barceló Hamilton Menorca, Es Castell</p><p><b>Ida:</b> miércoles 22 · llegada 14:00</p><p><b>Vuelta:</b> miércoles 29 · salida 12:00</p></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <button class="nav-item active" data-view="todayView"><span>◫</span><small>Ruta</small></button>
+      <button class="nav-item" data-view="mapView"><span>⌖</span><small>Mapa</small></button>
+      <button class="nav-item" data-view="savedView"><span>♡</span><small>Guardado</small></button>
+      <button class="nav-item" data-view="guideView"><span>☼</span><small>Guía</small></button>
+    </nav>
+  </div>
+
+  <dialog id="planModal">
+    <form method="dialog" id="planForm">
+      <div class="modal-head"><div><p class="eyebrow dark">EDITAR RUTA</p><h2 id="modalTitle">Añadir un plan</h2></div><button value="cancel" class="close-button" aria-label="Cerrar">×</button></div>
+      <input type="hidden" id="editId">
+      <label>Día<select id="planDay" required></select></label>
+      <label>Nombre<input id="planName" required placeholder="Ej. Paseo por el puerto"></label>
+      <div class="form-grid"><label>Hora<input id="planTime" type="time"></label><label>Tipo<select id="planType"><option>Playa</option><option>Pueblo</option><option>Comida</option><option>Ruta</option><option>Reserva</option><option>Otro</option></select></label></div>
+      <label>Notas<textarea id="planDescription" rows="3" placeholder="Qué hacer, acceso, recordatorios…"></textarea></label>
+      <div class="form-grid"><label>Latitud<input id="planLat" type="number" step="any" placeholder="39.89"></label><label>Longitud<input id="planLng" type="number" step="any" placeholder="4.26"></label></div>
+      <div class="modal-actions"><button value="cancel" class="secondary-button">Cancelar</button><button type="submit" value="default" class="primary-button">Guardar plan</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="app.js?v=3"></script>
+</body>
+</html>

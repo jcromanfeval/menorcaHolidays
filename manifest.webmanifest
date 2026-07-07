@@ -1,0 +1,12 @@
+{
+  "name":"Menorca · Mi viaje",
+  "short_name":"Menorca",
+  "description":"Itinerario personal y guía de viaje de Menorca",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#f8fbfa",
+  "theme_color":"#092f35",
+  "lang":"es",
+  "orientation":"portrait-primary",
+  "icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
