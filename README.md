@@ -20,6 +20,8 @@ La carpeta debe publicarse en una dirección HTTPS. Una vez publicada:
 
 Los cambios se guardan en el teléfono. La sección **Guardado** permite exportar una copia JSON y restaurarla en otro dispositivo.
 
+La versión 4 incorpora el itinerario revisado del 22 al 29 de julio, media pensión, actividades alternativas, seguimiento de actividades y 23 ubicaciones numeradas cronológicamente. Cala Galdana dispone de acceso directo a Google Maps.
+
 ## Conectividad
 
 La interfaz y el itinerario quedan disponibles sin conexión después de la primera visita. El mapa cartográfico, Google Maps, AEMET y las webs de transporte necesitan conexión.
