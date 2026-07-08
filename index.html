@@ -9,7 +9,7 @@
   <link rel="icon" href="icon.svg">
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
   <title>Menorca · Mi viaje</title>
 </head>
 <body>
@@ -19,7 +19,10 @@
         <p class="eyebrow">22–29 JULIO 2026</p>
         <h1>Menorca <span>☀</span></h1>
       </div>
-      <button class="icon-button" id="installBtn" hidden aria-label="Instalar aplicación" title="Instalar">↓</button>
+      <div class="top-actions">
+        <button class="sync-button" id="accountBtn" type="button"><span id="syncDot"></span><b>Compartir</b></button>
+        <button class="icon-button" id="installBtn" hidden aria-label="Instalar aplicación" title="Instalar">↓</button>
+      </div>
     </header>
 
     <main>
@@ -102,8 +105,33 @@
     </form>
   </dialog>
 
+  <dialog id="syncModal">
+    <div class="sync-dialog">
+      <div class="modal-head"><div><p class="eyebrow dark">VIAJE COMPARTIDO</p><h2>Sincronización</h2></div><button id="closeSyncBtn" class="close-button" aria-label="Cerrar">×</button></div>
+      <p class="sync-state" id="syncStatus">Sin conectar · los cambios sólo están en este dispositivo</p>
+      <section id="signedOutPanel">
+        <p>Accede con Google para compartir el itinerario y ver los cambios de ambos en tiempo real.</p>
+        <button id="signInBtn" class="google-button" type="button"><span>G</span> Acceder con Google</button>
+      </section>
+      <section id="signedInPanel" hidden>
+        <div class="user-card"><img id="userPhoto" alt="" hidden><div><small>Sesión iniciada</small><strong id="userName"></strong></div></div>
+        <div id="noTripPanel">
+          <button id="createTripBtn" class="primary-button wide" type="button">Crear viaje compartido</button>
+          <div class="join-row"><input id="joinCode" placeholder="Código de invitación"><button id="joinTripBtn" class="secondary-button" type="button">Unirme</button></div>
+        </div>
+        <div id="tripPanel" hidden>
+          <div class="shared-card"><small>Viaje conectado</small><strong id="sharedTripName">Menorca 2026</strong><span id="lastSyncText">Esperando cambios…</span></div>
+          <label>Invitación privada<div class="copy-row"><input id="inviteLink" readonly><button id="copyInviteBtn" class="secondary-button" type="button">Copiar</button></div></label>
+          <button id="disconnectTripBtn" class="text-danger" type="button">Desconectar este dispositivo</button>
+        </div>
+        <button id="signOutBtn" class="text-button sign-out" type="button">Cerrar sesión</button>
+      </section>
+    </div>
+  </dialog>
+
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
+  <script type="module" src="sync.js?v=5"></script>
 </body>
 </html>
