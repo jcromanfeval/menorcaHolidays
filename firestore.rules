@@ -8,13 +8,26 @@ service cloud.firestore {
       return signedIn() &&
         exists(/databases/$(database)/documents/trips/$(tripId)/members/$(request.auth.uid));
     }
+    function keepsTripIdentity() {
+      return request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.inviteToken == resource.data.inviteToken &&
+        request.resource.data.name == resource.data.name;
+    }
+    function validSharedStateUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['state', 'updatedAt', 'updatedBy', 'updatedByName']) &&
+        request.resource.data.updatedBy is string &&
+        request.resource.data.updatedByName is string;
+    }
 
     match /trips/{tripId} {
       allow create: if signedIn() &&
         request.resource.data.ownerId == request.auth.uid;
-      allow read: if isMember(tripId);
-      allow update: if isMember(tripId) &&
-        request.resource.data.ownerId == resource.data.ownerId;
+      allow read: if isMember(tripId) || resource.data.inviteToken is string;
+      allow update: if keepsTripIdentity() && (
+        isMember(tripId) ||
+        (!signedIn() && validSharedStateUpdate())
+      );
       allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
 
       match /members/{userId} {
@@ -37,7 +50,7 @@ service cloud.firestore {
     }
 
     match /invites/{token} {
-      allow read: if signedIn();
+      allow read: if true;
       allow create: if signedIn() &&
         request.resource.data.createdBy == request.auth.uid &&
         isMember(request.resource.data.tripId);

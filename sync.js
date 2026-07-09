@@ -28,11 +28,13 @@ const db=getFirestore(firebaseApp);
 const provider=new GoogleAuthProvider();
 const TRIP_KEY='menorca-shared-trip-v1';
 const PENDING_INVITE_KEY='menorca-pending-invite-v1';
+const GUEST_KEY='menorca-guest-v1';
 const $=selector=>document.querySelector(selector);
 
 provider.setCustomParameters({prompt:'select_account'});
 
-let user=null;
+let guest=loadGuest();
+let user=guest;
 let tripId=localStorage.getItem(TRIP_KEY);
 let unsubscribe=null;
 let writeTimer=null;
@@ -43,6 +45,26 @@ const modal=$('#syncModal');
 const status=$('#syncStatus');
 const dot=$('#syncDot');
 
+function loadGuest(){
+  try{return JSON.parse(localStorage.getItem(GUEST_KEY)||'null')}catch{return null}
+}
+function saveGuest(name){
+  const current=loadGuest();
+  const next=current||{uid:`guest-${crypto.randomUUID()}`, guest:true};
+  next.displayName=(name||current?.displayName||'Invitada').trim();
+  next.email='Acceso por invitación';
+  localStorage.setItem(GUEST_KEY,JSON.stringify(next));
+  guest=next;
+  user=next;
+  return next;
+}
+function clearGuest(){
+  localStorage.removeItem(GUEST_KEY);
+  guest=null;
+}
+function userName(){
+  return user?.displayName||user?.email||'otro dispositivo';
+}
 function setStatus(text,kind='offline'){
   status.textContent=text;
   status.classList.toggle('sync-error',kind==='error');
@@ -57,16 +79,20 @@ function showAuth(){
   $('#signedOutPanel').hidden=!!user;
   $('#signedInPanel').hidden=!user;
   if(!user)return;
-  $('#userName').textContent=user.displayName||user.email;
+  $('#userName').textContent=user.guest?`${userName()} · invitación sin Google`:userName();
   const photo=$('#userPhoto');
   photo.hidden=!user.photoURL;
   if(user.photoURL)photo.src=user.photoURL;
   $('#noTripPanel').hidden=!!tripId;
   $('#tripPanel').hidden=!tripId;
+  $('#createTripBtn').hidden=!!user.guest;
 }
 function cleanInvite(value){
   const raw=(value||'').trim();
   try{return new URL(raw).searchParams.get('invite')||raw}catch{return raw}
+}
+function pendingInvite(){
+  return cleanInvite(new URLSearchParams(location.search).get('invite')||sessionStorage.getItem(PENDING_INVITE_KEY)||$('#guestInviteCode')?.value||$('#joinCode')?.value);
 }
 function invitationUrl(token){
   return `${location.origin}${location.pathname}?invite=${encodeURIComponent(token)}`;
@@ -82,14 +108,14 @@ function isIOS(){
 }
 function authErrorMessage(error){
   const code=error?.code||'';
-  if(code==='auth/unauthorized-domain')return 'Dominio no autorizado en Firebase. Añade jcromanfeval.github.io en Authentication > Settings > Authorized domains.';
-  if(code==='auth/popup-blocked'||code==='auth/popup-closed-by-user')return 'El navegador ha bloqueado la ventana de Google. Probando acceso por redirección…';
+  if(code==='auth/unauthorized-domain')return 'Dominio no autorizado en Firebase. Usa https://menorca-2026.firebaseapp.com/';
+  if(code==='auth/popup-blocked'||code==='auth/popup-closed-by-user')return 'El navegador ha bloqueado la ventana de Google. Probando redirección…';
   if(code==='auth/operation-not-supported-in-this-environment')return 'Este navegador no permite el acceso con ventana emergente. Probando redirección…';
   if(code==='auth/network-request-failed')return 'No hay conexión suficiente para iniciar sesión.';
-  return 'No se pudo iniciar sesión con Google. Si estás en iPhone, abre la app desde Safari y vuelve a intentarlo.';
+  return 'No se pudo iniciar sesión con Google. En iPhone puedes entrar con invitación sin Google.';
 }
 async function startGoogleSignIn(){
-  const pending=cleanInvite(new URLSearchParams(location.search).get('invite')||$('#joinCode')?.value);
+  const pending=pendingInvite();
   if(pending)sessionStorage.setItem(PENDING_INVITE_KEY,pending);
   await setPersistence(auth,browserLocalPersistence);
   setStatus(isIOS()?'Abriendo Google en modo compatible con iPhone…':'Abriendo Google…','saving');
@@ -135,11 +161,14 @@ async function subscribeTrip(){
   });
 }
 async function createTrip(){
-  if(!user)return;
+  if(!user||user.guest){
+    setStatus('Para crear el viaje inicia sesión con Google. La invitación sirve para unirse.','error');
+    return;
+  }
   setStatus('Creando el viaje compartido…','saving');
   const tripRef=doc(collection(db,'trips'));
   const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
-  await setDoc(tripRef,{name:'Menorca 2026',ownerId:user.uid,inviteToken:token,state:sharedState(),updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByName:user.displayName||user.email});
+  await setDoc(tripRef,{name:'Menorca 2026',ownerId:user.uid,inviteToken:token,state:sharedState(),updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByName:userName()});
   await setDoc(doc(db,'trips',tripRef.id,'members',user.uid),{role:'owner',name:user.displayName||'',email:user.email||'',joinedAt:serverTimestamp()});
   await setDoc(doc(db,'invites',token),{tripId:tripRef.id,createdBy:user.uid,active:true,createdAt:serverTimestamp()});
   tripId=tripRef.id;
@@ -159,7 +188,9 @@ async function joinTrip(tokenValue){
   const invite=await getDoc(doc(db,'invites',token));
   if(!invite.exists()||invite.data().active===false)throw new Error('Invitación no válida');
   const target=invite.data().tripId;
-  await setDoc(doc(db,'trips',target,'members',user.uid),{role:'member',name:user.displayName||'',email:user.email||'',inviteToken:token,joinedAt:serverTimestamp()});
+  if(!user.guest){
+    await setDoc(doc(db,'trips',target,'members',user.uid),{role:'member',name:user.displayName||'',email:user.email||'',inviteToken:token,joinedAt:serverTimestamp()});
+  }
   tripId=target;
   inviteToken=token;
   localStorage.setItem(TRIP_KEY,tripId);
@@ -167,11 +198,22 @@ async function joinTrip(tokenValue){
   showAuth();
   await subscribeTrip();
 }
+async function joinAsGuest(){
+  const token=pendingInvite();
+  if(!token){
+    setStatus('Pega el enlace privado o el código de invitación','error');
+    return;
+  }
+  const name=$('#guestName').value||'Invitada';
+  saveGuest(name);
+  showAuth();
+  await joinTrip(token);
+}
 async function pushState(){
   if(!user||!tripId||!remoteReady)return;
   setStatus('Guardando cambios…','saving');
   try{
-    await updateDoc(doc(db,'trips',tripId),{state:sharedState(),updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByName:user.displayName||user.email});
+    await updateDoc(doc(db,'trips',tripId),{state:sharedState(),updatedAt:serverTimestamp(),updatedBy:user.uid,updatedByName:userName()});
     setStatus('Sincronizado en tiempo real','online');
   }catch(error){
     console.error(error);
@@ -190,10 +232,22 @@ $('#signInBtn').onclick=()=>startGoogleSignIn().catch(error=>{
   console.error(error);
   setStatus(authErrorMessage(error),'error');
 });
+$('#guestJoinBtn').onclick=()=>joinAsGuest().catch(error=>{
+  console.error(error);
+  setStatus('No se pudo entrar con esa invitación','error');
+});
 $('#signOutBtn').onclick=async()=>{
   stopListening();
-  await signOut(auth);
+  if(user?.guest){
+    clearGuest();
+  }else{
+    await signOut(auth);
+  }
   user=null;
+  tripId=null;
+  inviteToken=null;
+  localStorage.removeItem(TRIP_KEY);
+  $('#inviteLink').value='';
   setStatus('Sin conectar · los cambios sólo están en este dispositivo');
   showAuth();
 };
@@ -225,13 +279,20 @@ getRedirectResult(auth).catch(error=>{
 });
 
 onAuthStateChanged(auth,async current=>{
-  user=current;
+  if(current){
+    user=current;
+    clearGuest();
+  }else if(guest){
+    user=guest;
+  }else{
+    user=null;
+  }
   showAuth();
   if(!user){
     setStatus('Sin conectar · los cambios sólo están en este dispositivo');
     return;
   }
-  const pending=new URLSearchParams(location.search).get('invite')||sessionStorage.getItem(PENDING_INVITE_KEY);
+  const pending=pendingInvite();
   if(pending&&!tripId){
     try{await joinTrip(pending)}
     catch(error){
@@ -241,7 +302,7 @@ onAuthStateChanged(auth,async current=>{
   }else if(tripId){
     await subscribeTrip();
   }else{
-    setStatus('Sesión iniciada · crea o únete a un viaje','online');
+    setStatus(user.guest?'Pega una invitación para unirte al viaje':'Sesión iniciada · crea o únete a un viaje','online');
   }
   sessionStorage.removeItem(PENDING_INVITE_KEY);
 });
