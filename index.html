@@ -7,9 +7,18 @@
   <meta name="description" content="Guía personal e itinerario editable para una semana en Menorca">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg">
+  <script>
+    (() => {
+      const ua = navigator.userAgent || navigator.vendor || '';
+      const isiOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isiOS && location.hostname.endsWith('github.io')) {
+        location.replace(`https://menorca-2026.firebaseapp.com/${location.search}${location.hash}`);
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
   <title>Menorca · Mi viaje</title>
 </head>
 <body>
@@ -131,7 +140,7 @@
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="app.js?v=6"></script>
-  <script type="module" src="sync.js?v=6"></script>
+  <script src="app.js?v=7"></script>
+  <script type="module" src="sync.js?v=7"></script>
 </body>
 </html>
