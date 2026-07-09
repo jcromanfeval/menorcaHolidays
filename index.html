@@ -9,7 +9,7 @@
   <link rel="icon" href="icon.svg">
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
   <title>Menorca · Mi viaje</title>
 </head>
 <body>
@@ -110,7 +110,7 @@
       <div class="modal-head"><div><p class="eyebrow dark">VIAJE COMPARTIDO</p><h2>Sincronización</h2></div><button id="closeSyncBtn" class="close-button" aria-label="Cerrar">×</button></div>
       <p class="sync-state" id="syncStatus">Sin conectar · los cambios sólo están en este dispositivo</p>
       <section id="signedOutPanel">
-        <p>Accede con Google para compartir el itinerario y ver los cambios de ambos en tiempo real.</p>
+        <p>Accede con Google para compartir el itinerario y ver los cambios de ambos en tiempo real. En iPhone usaremos un acceso por redirección, más fiable que la ventana emergente.</p>
         <button id="signInBtn" class="google-button" type="button"><span>G</span> Acceder con Google</button>
       </section>
       <section id="signedInPanel" hidden>
@@ -131,7 +131,7 @@
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="app.js?v=5"></script>
-  <script type="module" src="sync.js?v=5"></script>
+  <script src="app.js?v=6"></script>
+  <script type="module" src="sync.js?v=6"></script>
 </body>
 </html>
